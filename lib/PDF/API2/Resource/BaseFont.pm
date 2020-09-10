@@ -37,7 +37,8 @@ sub new {
     $pdf->new_obj($self) unless $self->is_obj($pdf);
 
     $self->{'Type'} = PDFName('Font');
-
+    $self->{'WidthCache'} = [];
+    
     $self->{' apipdf'} = $pdf;
     weaken $self->{' apipdf'};
     return $self;
@@ -577,13 +578,13 @@ sub width {
     my ($self, $text) = @_;
     $text = $self->strByUtf($text) if utf8::is_utf8($text);
 
-    my @cache;
+    my $cache      = $self->{'WidthCache'};
     my $width      = 0;
     my $kern       = $self->{'-dokern'} && ref($self->data->{'kern'});
     my $last_glyph = '';
     foreach my $n (unpack('C*', $text)) {
-        $cache[$n] //= $self->wxByEnc($n);
-        $width += $cache[$n];
+        $cache->[$n] //= $self->wxByEnc($n);
+        $width += $cache->[$n];
         if ($kern) {
             $width += ($self->data->{'kern'}->{$last_glyph . ':' . $self->data->{'e2n'}->[$n]} // 0);
             $last_glyph = $self->data->{'e2n'}->[$n];
